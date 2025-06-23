@@ -1,0 +1,24 @@
+read -sv hardware/accelerator.v
+hierarchy -top accelerator
+
+proc; fsm; opt; memory; opt
+
+techmap; opt
+
+dfflibmap -liberty cmos_cells.lib
+abc -liberty cmos_cells.lib
+
+clean
+
+
+read -sv hardware/cpu.v
+hierarchy -top cpu
+
+proc; fsm; opt; memory; opt
+
+techmap; opt
+
+dfflibmap -liberty cmos_cells.lib
+abc -liberty cmos_cells.lib
+
+clean

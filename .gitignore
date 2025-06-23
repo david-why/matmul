@@ -4,3 +4,7 @@ obj_dir/
 .vscode/
 a.out
 .DS_Store
+*.elf
+*.bin
+*.o
+*.a

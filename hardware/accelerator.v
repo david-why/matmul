@@ -13,16 +13,21 @@ module accelerator (
 
     always @(posedge clk) begin
         if (mem_valid) begin
-            mem_ready <= 1'b1;
-            if (mem_wstrb == 4'b0) begin
+            if (mem_wstrb == 0) begin
                 // reading data
-                mem_rdata <= memory + 1;
-                mem_ready <= 1;
+                if (mem_addr == 'h1003004) begin
+                    mem_rdata <= memory + 1;
+                    mem_ready <= 1;
+                end
             end else begin
                 // writing data
-                memory <= mem_wdata;
-                mem_ready <= 1;
+                if (mem_addr == 'h1003000) begin
+                    memory <= mem_wdata;
+                    mem_ready <= 1;
+                end
             end
+        end else begin
+            mem_ready <= 0;
         end
     end
 

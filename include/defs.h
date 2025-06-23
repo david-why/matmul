@@ -1,0 +1,10 @@
+#pragma once
+
+#define RAM_START 0x00000000
+#define ROM_START 0x00800000
+
+#define IO_BASE 0x01000000
+#define IO_UART0 0x01001000
+#define IO_EXIT 0x01002000
+#define IO_ACC_WRITE 0x01003000
+#define IO_ACC_READ 0x01003004
