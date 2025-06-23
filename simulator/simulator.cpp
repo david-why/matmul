@@ -11,7 +11,7 @@ static uint8_t mem[0x02000000];
 static Vcpu *top;
 static Vaccelerator *acc;
 
-#define LOGV(val) (cout << #val << ":" << val << " ")
+#define LOGV(val) (cout << #val << ":" << (val) << " ")
 
 // to make the linker happy
 double sc_time_stamp() { return 0; }
@@ -74,6 +74,7 @@ int main(int argc, char **argv)
         acc->mem_wstrb = top->mem_wstrb;
         acc->clk = 0;
         acc->eval();
+
 
         // Handle memory operations
         if (top->mem_valid)
@@ -149,11 +150,13 @@ int main(int argc, char **argv)
             top->mem_ready = 0;
         }
 
-        if (acc_connect) {
+        if (acc_connect)
+        {
             LOGV(acc->mem_addr);
             LOGV((int)acc->mem_valid);
             LOGV((int)acc->mem_wstrb);
             LOGV(acc->mem_wdata);
+            LOGV(acc->out_items);
             cout << endl;
         }
         if (acc_connect && acc->mem_ready)
