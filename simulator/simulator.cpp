@@ -75,7 +75,6 @@ int main(int argc, char **argv)
         acc->clk = 0;
         acc->eval();
 
-
         // Handle memory operations
         if (top->mem_valid)
         {
@@ -109,7 +108,7 @@ int main(int argc, char **argv)
                     cout << "Program exited with code " << (int)data << endl;
                     break;
                 }
-                else if (addr == IO_ACC_WRITE)
+                else if (addr >= IO_ACC_START && addr < IO_ACC_END)
                 {
                     acc_connect = 1;
                 }
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
             else
             {
                 // Reading data
-                if (addr == IO_ACC_READ)
+                if (addr >= IO_ACC_START && addr < IO_ACC_END)
                 {
                     acc_connect = 1;
                 }
@@ -156,11 +155,14 @@ int main(int argc, char **argv)
             LOGV((int)acc->mem_valid);
             LOGV((int)acc->mem_wstrb);
             LOGV(acc->mem_wdata);
-            LOGV(acc->out_items);
             cout << endl;
         }
         if (acc_connect && acc->mem_ready)
         {
+            if (!top->mem_wstrb) {
+                LOGV(acc->mem_rdata);
+                cout << endl;
+            }
             top->mem_ready = 1;
             top->mem_rdata = acc->mem_rdata;
             acc_connect = 0;

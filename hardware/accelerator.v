@@ -1,6 +1,6 @@
 module accelerator #(
-    parameter ADDR_WRITE = 'h1003000,
-    parameter ADDR_READ = 'h1004000,
+    parameter ADDR_WRITE = 'h1100000,
+    parameter ADDR_READ = 'h1300000,
     parameter N = 3
 ) (
     input clk,
@@ -10,9 +10,7 @@ module accelerator #(
     input [31:0] mem_addr,
     input [31:0] mem_wdata,
     input [3:0] mem_wstrb,
-    output reg [31:0] mem_rdata,
-
-    output [32*N-1:0] out_items
+    output reg [31:0] mem_rdata
 );
 
     reg [32*N-1:0] items = 0;
@@ -57,7 +55,5 @@ module accelerator #(
             mem_ready <= 0;
         end
     end
-
-    assign out_items = items;
 
 endmodule
