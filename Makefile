@@ -8,6 +8,9 @@ RVGCCPATH = $(shell ls -d `dirname $(RVROOT)`/../lib/gcc/*/*/$(RVARCH)/$(RVABI))
 
 all: a.out simulated/main.bin
 
+synth: hardware/accelerator.v
+	yosys synthesis/synth.ys
+
 # simulator stuff
 
 obj_dir/libVcpu.a: hardware/cpu.v hardware/picorv32.v
