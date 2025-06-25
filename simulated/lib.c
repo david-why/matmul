@@ -157,12 +157,14 @@ asm (
 	UNIMPL_FUNC(_chdir)
 	UNIMPL_FUNC(_getcwd)
 	UNIMPL_FUNC(_sysconf)
+	UNIMPL_FUNC(_getentropy)
 	"j unimplemented_syscall\n"
 );
 // clang-format on
 
 void unimplemented_syscall()
 {
+    printf("[UNIMPLEMENTED SYSCALL]");
     IO_OUT(IO_EXIT, 255);
     while (1) ;
     // asm volatile("ebreak");
@@ -177,7 +179,7 @@ ssize_t _read(int file, void *ptr, size_t len)
 
 ssize_t _write(int file, const void *ptr, size_t len)
 {
-    if (file == 1)
+    if (file == 1 || file == 2)
         for (size_t i = 0; i < len; ++i)
             putchar(((char *)ptr)[i]);
 

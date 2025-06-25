@@ -34,8 +34,8 @@ simulated/liblib.a: simulated/lib.o include/*
 	$(RVGCC)ar rcs simulated/liblib.a simulated/lib.o
 	$(RVGCC)ranlib simulated/liblib.a
 
-simulated/main.elf: simulated/liblib.a simulated/main.c include/* simulated/crtrv.o simulated/$(RVLDSCRIPT)
-	$(RVGCC)gcc -O2 -g -Iinclude -fno-pic -march=$(RVARCH) -mabi=$(RVABI) -fno-stack-protector -w -Wl,--no-relax -c simulated/main.c -o simulated/main.o
+simulated/main.elf: simulated/liblib.a simulated/main.cpp include/* simulated/crtrv.o simulated/$(RVLDSCRIPT)
+	$(RVGCC)g++ -O2 -g -Iinclude -Ithird_party -fno-pic -march=$(RVARCH) -mabi=$(RVABI) -fno-stack-protector -w -Wl,--no-relax -c simulated/main.cpp -o simulated/main.o
 	$(RVGCC)ld -m elf32lriscv -b elf32-littleriscv --no-relax --print-memory-usage -Tsimulated/$(RVLDSCRIPT) \
 		simulated/main.o -o simulated/main.elf -Lsimulated -llib \
 		-L$(RVLIBPATH) -lsupc++ -lc -lm \

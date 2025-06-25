@@ -151,17 +151,18 @@ int main(int argc, char **argv)
 
         if (acc_connect)
         {
-            LOGV(acc->mem_addr);
-            LOGV((int)acc->mem_valid);
-            LOGV((int)acc->mem_wstrb);
-            LOGV(acc->mem_wdata);
-            cout << endl;
+            // LOGV(acc->mem_addr);
+            // LOGV((int)acc->mem_valid);
+            // LOGV((int)acc->mem_wstrb);
+            // LOGV(acc->mem_wdata);
+            // cout << endl;
         }
         if (acc_connect && acc->mem_ready)
         {
             if (!top->mem_wstrb) {
-                LOGV(acc->mem_rdata);
-                cout << endl;
+                // LOGV(acc->mem_addr);
+                // LOGV(acc->mem_rdata);
+                // cout << endl;
             }
             top->mem_ready = 1;
             top->mem_rdata = acc->mem_rdata;

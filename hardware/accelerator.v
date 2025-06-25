@@ -14,13 +14,16 @@ Memory map:
 - ADDR_READ ~ ADDR_READ+8*N: The resulting vector.
 */
 
+/* verilator lint_off UNOPTFLAT */
+
 module accelerator #(
     parameter ADDR_WRITE = 'h1100000,
     parameter ADDR_READ = 'h1300000,
+    parameter ADDR_DEBUG_READ = 'h1400000,
     parameter ADDR_END = 'h1500000,
     parameter N = 4,
-    parameter INPUT_WIDTH = 32,
-    parameter RESULT_WIDTH = 64
+    parameter INPUT_WIDTH = 8,
+    parameter RESULT_WIDTH = 8
 ) (
     input clk,
 
@@ -50,7 +53,7 @@ module accelerator #(
             assign eachcol_results[RESULT_WIDTH*(c*(N+1)+1)-1:RESULT_WIDTH*c*(N+1)] = 0;
             for (r = 0; r < N; r++) begin
                 assign eachcol_results[RESULT_WIDTH*(c*(N+1)+r+2)-1:RESULT_WIDTH*(c*(N+1)+r+1)] = 
-                    memory[INPUT_WIDTH*(r+1)-1] * // element of A
+                    memory[INPUT_WIDTH*(r+1)-1:INPUT_WIDTH*r] * // element of A
                     memory[INPUT_WIDTH*(N+c*N+r+1)-1:INPUT_WIDTH*(N+c*N+r)] + // element of B
                     eachcol_results[RESULT_WIDTH*(c*(N+1)+r+1)-1:RESULT_WIDTH*(c*(N+1)+r)]; // previous result
             end
@@ -59,6 +62,12 @@ module accelerator #(
     endgenerate
 
     // memory interface
+
+    wire [31:0] olddata_mask;
+    wire [31:0] newdata_mask;
+
+    assign newdata_mask = {{8{mem_wstrb[0]}}, {8{mem_wstrb[1]}}, {8{mem_wstrb[2]}}, {8{mem_wstrb[3]}}};
+    assign olddata_mask = ~newdata_mask;
 
     always @(posedge clk) begin
         if (mem_valid) begin
@@ -70,13 +79,16 @@ module accelerator #(
                 end else if (mem_addr >= ADDR_WRITE && mem_addr < ADDR_READ) begin
                     mem_rdata <= memory[(mem_addr&'hFFFFF)*8 +: 32];
                     mem_ready <= 1;
+                end else if (mem_addr >= ADDR_DEBUG_READ && mem_addr < ADDR_END) begin
+                    mem_rdata <= eachcol_results[(mem_addr&'hFFFFF)*8 +: 32];
+                    mem_ready <= 1;
                 end else begin
                     mem_ready <= 0;
                 end
             end else begin
                 // writing data
                 if (mem_addr >= ADDR_WRITE && mem_addr < ADDR_READ) begin
-                    memory[(mem_addr&'hFFFFF)*8 +: 32] <= mem_wdata;
+                    memory[(mem_addr&'hFFFFF)*8 +: 32] <= (newdata_mask & mem_wdata) | (olddata_mask & memory[(mem_addr&'hFFFFF)*8 +: 32]);
                     mem_ready <= 1;
                 end else begin
                     mem_ready <= 0;
