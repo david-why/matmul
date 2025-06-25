@@ -1,2 +1,2 @@
 read -sv hardware/accelerator.v
-synth_xilinx -top accelerator -json synthesis/xilinx.json
+synth_ice40 -top accelerator -json synthesis/xilinx.json

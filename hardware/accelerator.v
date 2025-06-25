@@ -22,9 +22,9 @@ module accelerator #(
     parameter ADDR_DEBUG_READ = 'h1400000,
     parameter ADDR_END = 'h1500000,
     parameter R = 8, // ACC_CHUNK_ROWS
-    parameter S = 4, // ACC_CHUNK_COLS
+    parameter S = 8, // ACC_CHUNK_COLS
     parameter INPUT_WIDTH = 8,
-    parameter RESULT_WIDTH = 8
+    parameter RESULT_WIDTH = 16
 ) (
     input clk,
 

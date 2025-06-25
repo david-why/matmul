@@ -105,7 +105,7 @@ int main(int argc, char **argv)
                 }
                 else if (addr == IO_EXIT)
                 {
-                    cout << "Program exited with code " << (int)data << endl;
+                    cerr << "Program exited with code " << (int)data << endl;
                     break;
                 }
                 else if (addr >= IO_ACC_START && addr < IO_ACC_END)
