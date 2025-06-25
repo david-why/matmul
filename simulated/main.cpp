@@ -7,7 +7,8 @@
 
 using namespace std;
 
-#define ACC_CHUNK_SIZE 4
+#define ACC_CHUNK_ROWS 8
+#define ACC_CHUNK_COLS 4
 #define ACC_INPUT_TYPE uint8_t
 #define ACC_OUTPUT_TYPE uint8_t
 
@@ -15,7 +16,7 @@ volatile void *const acc_in = (volatile void *)IO_ACC_WRITE;
 volatile const void *const acc_out = (const volatile void *)IO_ACC_READ;
 
 #define row_of_a ((volatile ACC_INPUT_TYPE *const)acc_in)
-#define matrix_b ((volatile ACC_INPUT_TYPE *const)(acc_in + ACC_CHUNK_SIZE * sizeof(ACC_INPUT_TYPE)))
+#define matrix_b ((volatile ACC_INPUT_TYPE *const)(acc_in + ACC_CHUNK_ROWS * sizeof(ACC_INPUT_TYPE)))
 #define result_row ((volatile const ACC_OUTPUT_TYPE *const)acc_out)
 
 typedef Eigen::Matrix<ACC_INPUT_TYPE, Eigen::Dynamic, Eigen::Dynamic> Matrix;
@@ -62,20 +63,20 @@ Matrix test_accelerator(const Matrix &a, const Matrix &b)
     int n = a.rows(), m = b.cols(), p = a.cols();
     uint8_t result[m][n];
     memset(result, 0, m * n);
-    int chunks_c = (m + ACC_CHUNK_SIZE - 1) / ACC_CHUNK_SIZE;
-    int chunks_r = (n + ACC_CHUNK_SIZE - 1) / ACC_CHUNK_SIZE;
+    int chunks_c = (m + ACC_CHUNK_COLS - 1) / ACC_CHUNK_COLS;
+    int chunks_r = (n + ACC_CHUNK_ROWS - 1) / ACC_CHUNK_ROWS;
     for (int chunk_c = 0; chunk_c < chunks_c; chunk_c++)
     {
-        int min_c = chunk_c * ACC_CHUNK_SIZE, max_c = min((chunk_c + 1) * ACC_CHUNK_SIZE, m);
+        int min_c = chunk_c * ACC_CHUNK_COLS, max_c = min((chunk_c + 1) * ACC_CHUNK_COLS, m);
         for (int chunk_r = 0; chunk_r < chunks_r; chunk_r++)
         {
-            int min_r = chunk_r * ACC_CHUNK_SIZE, max_r = min((chunk_r + 1) * ACC_CHUNK_SIZE, p);
+            int min_r = chunk_r * ACC_CHUNK_ROWS, max_r = min((chunk_r + 1) * ACC_CHUNK_ROWS, p);
             // write chunk of B first
             for (int c = min_c; c < max_c; c++)
             {
                 for (int r = min_r; r < max_r; r++)
                 {
-                    matrix_b[(c - min_c) * ACC_CHUNK_SIZE + r - min_r] = b(r, c);
+                    matrix_b[(c - min_c) * ACC_CHUNK_ROWS + r - min_r] = b(r, c);
                 }
             }
             // then for each row of A

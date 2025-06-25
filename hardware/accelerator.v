@@ -1,6 +1,6 @@
 /*
-Matrix multiplication accelerator for uint32. Handles the multiplication
-of a row vector of A and a matrix B.
+Matrix multiplication accelerator. Handles the multiplication
+of a row vector A and a matrix B.
 
 Parameters:
 - ADDR_WRITE, ADDR_READ, ADDR_END: The memory mapped regions.
@@ -9,9 +9,9 @@ Parameters:
 - RESULT_WIDTH: The width of an output result, in bits.
 
 Memory map:
-- ADDR_WRITE ~ ADDR_WRITE+4*N: The elements of vector A.
-- ADDR_WRITE+4*N ~ ADDR_WRITE+4*(N+N*N): The elements of matrix B, in column-major order.
-- ADDR_READ ~ ADDR_READ+8*N: The resulting vector.
+- ADDR_WRITE ~ ADDR_WRITE+4*R: The elements of vector A.
+- ADDR_WRITE+4*R ~ ADDR_WRITE+4*(R+R*S): The elements of matrix B, in column-major order.
+- ADDR_READ ~ ADDR_READ+8*S: The resulting vector.
 */
 
 /* verilator lint_off UNOPTFLAT */
@@ -21,7 +21,8 @@ module accelerator #(
     parameter ADDR_READ = 'h1300000,
     parameter ADDR_DEBUG_READ = 'h1400000,
     parameter ADDR_END = 'h1500000,
-    parameter N = 4,
+    parameter R = 8, // ACC_CHUNK_ROWS
+    parameter S = 4, // ACC_CHUNK_COLS
     parameter INPUT_WIDTH = 8,
     parameter RESULT_WIDTH = 8
 ) (
@@ -38,26 +39,25 @@ module accelerator #(
     // storage
 
     // memory[INPUT_WIDTH*(i+1)-1:INPUT_WIDTH*i]: i-th element of array A
-    // memory[INPUT_WIDTH*(N+c*N+r+1)-1:INPUT_WIDTH*(N+c*N+r)]: (r,c) of matrix B
-    reg [INPUT_WIDTH*(N+N*N)-1:0] memory;
-    wire [RESULT_WIDTH*N-1:0] result;
+    // memory[INPUT_WIDTH*(R+c*R+r+1)-1:INPUT_WIDTH*(R+c*R+r)]: (r,c) of matrix B
+    reg [INPUT_WIDTH*(R+R*S)-1:0] memory;
+    wire [RESULT_WIDTH*S-1:0] result;
 
     // calculation
 
-    wire [RESULT_WIDTH*(N*(N+1))-1:0] eachcol_results;
+    wire [RESULT_WIDTH*(S*(R+1))-1:0] eachcol_results;
 
     genvar r, c;
     generate
-        for (c = 0; c < N; c++) begin
-            // wire [RESULT_WIDTH*(N+1)-1:0] col_results;
-            assign eachcol_results[RESULT_WIDTH*(c*(N+1)+1)-1:RESULT_WIDTH*c*(N+1)] = 0;
-            for (r = 0; r < N; r++) begin
-                assign eachcol_results[RESULT_WIDTH*(c*(N+1)+r+2)-1:RESULT_WIDTH*(c*(N+1)+r+1)] = 
+        for (c = 0; c < S; c++) begin
+            assign eachcol_results[RESULT_WIDTH*(c*(R+1)+1)-1:RESULT_WIDTH*c*(R+1)] = 0;
+            for (r = 0; r < R; r++) begin
+                assign eachcol_results[RESULT_WIDTH*(c*(R+1)+r+2)-1:RESULT_WIDTH*(c*(R+1)+r+1)] = 
                     memory[INPUT_WIDTH*(r+1)-1:INPUT_WIDTH*r] * // element of A
-                    memory[INPUT_WIDTH*(N+c*N+r+1)-1:INPUT_WIDTH*(N+c*N+r)] + // element of B
-                    eachcol_results[RESULT_WIDTH*(c*(N+1)+r+1)-1:RESULT_WIDTH*(c*(N+1)+r)]; // previous result
+                    memory[INPUT_WIDTH*(R+c*R+r+1)-1:INPUT_WIDTH*(R+c*R+r)] + // element of B
+                    eachcol_results[RESULT_WIDTH*(c*(R+1)+r+1)-1:RESULT_WIDTH*(c*(R+1)+r)]; // previous result
             end
-            assign result[RESULT_WIDTH*(c+1)-1:RESULT_WIDTH*c] = eachcol_results[RESULT_WIDTH*(c*(N+1)+N+1)-1:RESULT_WIDTH*(c*(N+1)+N)];
+            assign result[RESULT_WIDTH*(c+1)-1:RESULT_WIDTH*c] = eachcol_results[RESULT_WIDTH*(c*(R+1)+R+1)-1:RESULT_WIDTH*(c*(R+1)+R)];
         end
     endgenerate
 
