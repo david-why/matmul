@@ -4,15 +4,22 @@ void *__dso_handle = 0;
 
 #include <cstring>
 
-#include <vector>
-#include <map>
-
 #define EIGEN_NO_IO 1
 #include <Eigen/Dense>
 
 using namespace std;
 
+#ifndef TEST_OTHER_METHODS
+#define TEST_OTHER_METHODS 1
+#endif
+
+#ifndef TEST_ACCELERATOR
+#define TEST_ACCELERATOR 1
+#endif
+
+#ifndef DEBUG
 #define DEBUG 1
+#endif
 
 #if DEBUG
 #define dprintf printf
@@ -22,18 +29,22 @@ using namespace std;
 
 #define MAX_TESTS 50
 
-#ifndef ACC_CHUNK_ROWS
-#define ACC_CHUNK_ROWS 16
+#define ACC_CHUNK_ROWS_RAW (*(volatile const uint32_t *)(IO_ACC_DREAD + 0))
+#define ACC_CHUNK_COLS_RAW (*(volatile const uint32_t *)(IO_ACC_DREAD + 4))
+
+int ACC_CHUNK_ROWS, ACC_CHUNK_COLS;
+
+#ifndef ACC_INPUT_WIDTH
+#define ACC_INPUT_WIDTH 8
 #endif
-#ifndef ACC_CHUNK_COLS
-#define ACC_CHUNK_COLS 16
+#ifndef ACC_OUTPUT_WIDTH
+#define ACC_OUTPUT_WIDTH 16
 #endif
-#ifndef ACC_INPUT_TYPE
-#define ACC_INPUT_TYPE uint8_t
-#endif
-#ifndef ACC_OUTPUT_TYPE
-#define ACC_OUTPUT_TYPE uint16_t
-#endif
+
+#define MAKEINT2(x) uint##x##_t
+#define MAKEINT(x) MAKEINT2(x)
+#define ACC_INPUT_TYPE MAKEINT(ACC_INPUT_WIDTH)
+#define ACC_OUTPUT_TYPE MAKEINT(ACC_OUTPUT_WIDTH)
 
 volatile void *const acc_in = (volatile void *)IO_ACC_WRITE;
 volatile const void *const acc_out = (const volatile void *)IO_ACC_READ;
@@ -123,7 +134,22 @@ OutMatrix test_accelerator(const Matrix &a, const Matrix &b)
     return Eigen::Map<OutMatrix>((ACC_OUTPUT_TYPE *)result, n, m);
 }
 
-OutMatrix (*methods[])(const Matrix &, const Matrix &) = {test_custom, test_eigen, test_accelerator};
+OutMatrix (*methods[])(const Matrix &, const Matrix &) = {
+#if TEST_OTHER_METHODS
+    test_custom, test_eigen,
+#endif
+#if TEST_ACCELERATOR
+    test_accelerator
+#endif
+};
+const char *method_names[] = {
+#if TEST_OTHER_METHODS
+    "Custom Method", "Eigen Method",
+#endif
+#if TEST_ACCELERATOR
+    "Using Accelerator"
+#endif
+};
 constexpr int n_methods = sizeof(methods) / sizeof(methods[0]);
 
 struct method_result
@@ -141,8 +167,6 @@ struct test_result
 
 test_result test_results[MAX_TESTS];
 int n_test_results = 0;
-
-const char *method_names[] = {"Custom Method", "Eigen Method", "Using Accelerator"};
 
 void do_testcase(const char *name, int n, int m, int p)
 {
@@ -233,6 +257,12 @@ void print_json(void)
 
 int main()
 {
+    ACC_CHUNK_ROWS = ACC_CHUNK_ROWS_RAW;
+    ACC_CHUNK_COLS = ACC_CHUNK_COLS_RAW;
+
+    dprintf("Accelerator size: %dx%d", ACC_CHUNK_ROWS, ACC_CHUNK_COLS);
+
+    do_testcase("1x2 x 2x3", 1, 2, 3);
     do_testcase("16x16 x 16x16", 16, 16, 16);
     do_testcase("32x32 x 32x32", 32, 32, 32);
     do_testcase("16x32 x 32x32", 16, 32, 32);

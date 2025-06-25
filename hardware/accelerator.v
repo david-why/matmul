@@ -21,8 +21,8 @@ module accelerator #(
     parameter ADDR_READ = 'h1300000,
     parameter ADDR_DEBUG_READ = 'h1400000,
     parameter ADDR_END = 'h1500000,
-    parameter R = 8, // ACC_CHUNK_ROWS
-    parameter S = 8, // ACC_CHUNK_COLS
+    parameter R = 4, // ACC_CHUNK_ROWS
+    parameter S = 4, // ACC_CHUNK_COLS
     parameter INPUT_WIDTH = 8,
     parameter RESULT_WIDTH = 16
 ) (
@@ -73,14 +73,23 @@ module accelerator #(
         if (mem_valid) begin
             if (mem_wstrb == 0) begin
                 // reading data
-                if (mem_addr >= ADDR_READ && mem_addr < ADDR_END) begin
-                    mem_rdata <= result[(mem_addr&'hFFFFF)*8 +: 32];
-                    mem_ready <= 1;
-                end else if (mem_addr >= ADDR_WRITE && mem_addr < ADDR_READ) begin
+                if (mem_addr >= ADDR_WRITE && mem_addr < ADDR_READ) begin
                     mem_rdata <= memory[(mem_addr&'hFFFFF)*8 +: 32];
                     mem_ready <= 1;
-                end else if (mem_addr >= ADDR_DEBUG_READ && mem_addr < ADDR_END) begin
-                    mem_rdata <= eachcol_results[(mem_addr&'hFFFFF)*8 +: 32];
+                end else if (mem_addr == ADDR_DEBUG_READ + 0) begin
+                    mem_rdata <= R;
+                    mem_ready <= 1;
+                end else if (mem_addr == ADDR_DEBUG_READ + 4) begin
+                    mem_rdata <= S;
+                    mem_ready <= 1;
+                end else if (mem_addr == ADDR_DEBUG_READ + 8) begin
+                    mem_rdata <= INPUT_WIDTH;
+                    mem_ready <= 1;
+                end else if (mem_addr == ADDR_DEBUG_READ + 12) begin
+                    mem_rdata <= RESULT_WIDTH;
+                    mem_ready <= 1;
+                end else if (mem_addr >= ADDR_READ && mem_addr < ADDR_END) begin
+                    mem_rdata <= result[(mem_addr&'hFFFFF)*8 +: 32];
                     mem_ready <= 1;
                 end else begin
                     mem_ready <= 0;
